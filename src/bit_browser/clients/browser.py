@@ -118,3 +118,9 @@ class BrowserClient:
         url = f"{self.url}/browser/get"
         r = self.session.post(url, data=json.dumps(data)).json()
         return r
+
+    def reset_closed_state(self, id):
+        data = {"id": f"{id}"}
+        url = f"{self.url}/users"
+        r = self.session.post(url, data=json.dumps(data)).json()
+        return r
