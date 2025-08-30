@@ -112,3 +112,9 @@ class BrowserClient:
             headers=self.headers,
         ).json()
         return r
+
+    def get_browser_details(self, id):
+        data = {"id": f"{id}"}
+        url = f"{self.url}/browser/get"
+        r = self.session.post(url, data=json.dumps(data)).json()
+        return r
