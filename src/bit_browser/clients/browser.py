@@ -1,7 +1,8 @@
 import json
 
 import requests
-from constants import HEADERS, URL
+
+from bit_browser.constants import HEADERS, URL
 
 # 官方文档地址
 # https://doc2.bitbrowser.cn/jiekou/ben-di-fu-wu-zhi-nan.html
