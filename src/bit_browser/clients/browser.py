@@ -34,7 +34,7 @@ class BrowserClient:
         core_version: str = "112",
     ) -> str:
         # TODO: change to use pydantic model - improve validations
-        json_data = {
+        data = {
             "name": browser,  # 窗口名称
             "remark": remark,  # 备注
             "proxyMethod": proxy_method,  # 代理方式 2自定义 3 提取IP
@@ -62,16 +62,12 @@ class BrowserClient:
         #     },
         # }
 
-        res = self.session.post(
-            f"{self.url}/browser/update",
-            data=json.dumps(json_data),
-            headers=self.headers,
-        ).json()
+        res = self._post("/browser/update", data)
         browser_id = res["data"]["id"]
         print(browser_id)
         return browser_id
 
-    def update_browsers(self, ids: list[str], remark: str) -> None:
+    def update_browsers(self, ids: list[str], remark: str):
         # 更新窗口，支持批量更新和按需更新，ids 传入数组，单独更新只传一个id即可，只传入需要修改的字段即可，比如修改备注，具体字段请参考文档，browserFingerPrint指纹对象不修改，则无需传入
         data = {
             "ids": ids,
@@ -84,14 +80,9 @@ class BrowserClient:
         #     "ids": ["93672cf112a044f08b653cab691216f0"],
         #     "remark": "我是一个备注",
         #     "browserFingerPrint": {},
-        # }`
+        # }
 
-        url = f"{self.url}/browser/update/partial"
-
-        r = self.session.post(
-            url,
-            data=json.dumps(data),
-        ).json()
+        r = self._post("/browser/update/partial", data)
 
         return r
 
@@ -99,34 +90,25 @@ class BrowserClient:
         self, id
     ):  # 直接指定ID打开窗口，也可以使用 createBrowser 方法返回的ID
         data = {"id": f"{id}"}
-        url = f"{self.url}/browser/open"
-        r = self.session.post(url, data=json.dumps(data)).json()
+        r = self._post("/browser/open", data)
         return r
 
     def close_browser(self, id):  # 关闭窗口
-        d = {"id": f"{id}"}
-        url = f"{self.url}/browser/close"
-        r = requests.post(url, data=json.dumps(d)).json()
+        data = {"id": f"{id}"}
+        r = self._post("/browser/close", data)
         return r
 
     def delete_browser(self, id):  # 删除窗口
-        json_data = {"id": f"{id}"}
-        url = f"{self.url}/browser/delete"
-        r = requests.post(
-            url,
-            data=json.dumps(json_data),
-            headers=self.headers,
-        ).json()
+        data = {"id": f"{id}"}
+        r = self._post("/browser/delete", data)
         return r
 
     def get_browser_details(self, id):
         data = {"id": f"{id}"}
-        url = f"{self.url}/browser/get"
-        r = self.session.post(url, data=json.dumps(data)).json()
+        r = self._post("/browser/get", data)
         return r
 
     def reset_closed_state(self, id):
         data = {"id": f"{id}"}
-        url = f"{self.url}/users"
-        r = self.session.post(url, data=json.dumps(data)).json()
+        r = self._post("/users", data)
         return r
