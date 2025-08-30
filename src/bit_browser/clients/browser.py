@@ -16,6 +16,12 @@ class BrowserClient:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
+    def _post(self, endpoint: str, data: dict) -> dict:
+        """POST helper method."""
+        url = f"{self.url}{endpoint}"
+        response = self.session.post(url, data=json.dumps(data))
+        return response.json()
+
     def create_browser(
         self,
         browser: str,
