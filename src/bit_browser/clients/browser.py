@@ -1,4 +1,5 @@
 import json
+from typing import Optional
 
 import requests
 
@@ -11,11 +12,21 @@ from bit_browser.constants import HEADERS, URL
 
 
 class BrowserClient:
-    def __init__(self):
-        self.url = URL
-        self.headers = HEADERS
+    def __init__(self, url=URL, headers=HEADERS, token: Optional[str] = None):
+        """
+        Initialize the BrowserClient with optional API token.
+
+        Args:
+            url (str, optional): URL Defaults to URL.
+            headers (dict, optional): Headers Defaults to HEADERS.
+            token (Optional[str], optional): Token Defaults to None.
+        """
+        self.token = token
+        self.url = url
+        self.headers = headers.copy()
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+        self.session.headers.update({"x-api-key": token}) if token else None
 
     def _post(self, endpoint: str, data: dict | None = None) -> dict:
         """POST helper that sends JSON and returns parsed JSON."""
