@@ -17,11 +17,12 @@ class BrowserClient:
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
+    # TODO implement edge cases here and exceptions
     def _post(self, endpoint: str, data: dict | None = None) -> dict:
         """POST helper that sends JSON and returns parsed JSON."""
         url = f"{self.url}{endpoint}"
-        response = self.session.post(url, data=json.dumps(data or {}))
-        return response.json()
+        r = self.session.post(url, data=json.dumps(data or {}))
+        return r.json().get("data")
 
     def create_browser(
         self,
@@ -120,7 +121,7 @@ class BrowserClient:
         return r
 
     # Additional documented endpoints
-    def list_browsers(self, page: int, page_size: int, **filters):
+    def list_browsers(self, page: int = 0, page_size: int = 100, **filters):
         data = {"page": page, "pageSize": page_size}
         data.update(filters)
         return self._post("/browser/list", data)
