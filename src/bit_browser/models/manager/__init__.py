@@ -27,5 +27,15 @@ class BrowserManager:
 
     def _get_all_browsers(self) -> None:
         """_summary_"""
-        o: list[Session] = []
-        pass
+        sessions: list[Session] = []
+        all_browsers = self.client.list_browsers()
+
+        # TODO - implement
+        for b in all_browsers:
+            pass  # TODO - implement
+
+    def _get_browser(self, id: str) -> Session | None:
+        r = self.client.get_browser_details(id)
+        if r:
+            pass  # TODO - implement
+        return None
