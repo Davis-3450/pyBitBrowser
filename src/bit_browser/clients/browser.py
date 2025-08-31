@@ -28,11 +28,12 @@ class BrowserClient:
         self.session.headers.update(self.headers)
         self.session.headers.update({"x-api-key": token}) if token else None
 
-    def _post(self, endpoint: str, data: dict | None = None) -> dict:
+    def _post(self, endpoint: str, data: dict | None = None):
         """POST helper that sends JSON and returns parsed JSON."""
         url = f"{self.url}{endpoint}"
         response = self.session.post(url, data=json.dumps(data or {}))
-        return response.json()
+        j = response.json()
+        return j.get("data")
 
     def create_browser(
         self,
