@@ -34,19 +34,20 @@ class BrowserClient:
         """POST helper that sends JSON and returns parsed JSON."""
         url = f"{self.url}{endpoint}"
         response = self.session.post(url, data=json.dumps(data or {}))
-        j = response.json()
 
         try:
-            APIResponse.model_validate(j)  # validate response
-            status: bool = j.get("success", False)
-            if not status:
-                raise BadRequest(f"Bad request: {j.get('msg', 'No message')}")
+            r = response
+            r.raise_for_status()
+            j = r.json()
+            v = APIResponse.model_validate(j)
+            if r.ok and v.success:
+                return v.data
+            else:
+                raise BadRequest(v.msg)
         except Exception as e:
             raise ValidationError(f"Response validation error: {e}")
 
-        return j.get("data")
-
-    def create_browser(
+    def _edit_browser(
         self,
         browser: str,
         remark: str,
