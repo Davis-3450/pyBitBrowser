@@ -73,7 +73,7 @@ class Browser(BaseBrowserModel):
     status: int
     operUserId: str | None = None
     operUserName: str
-    operTime: str
+    operTime: str | None = None
     isDelete: int
     delReason: str
     isMostCommon: int
