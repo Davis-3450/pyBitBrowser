@@ -4,6 +4,8 @@ from typing import Optional
 import requests
 
 from bit_browser.constants import HEADERS, URL
+from bit_browser.errors import BadRequest, ValidationError
+from bit_browser.models.client import APIResponse
 
 # 官方文档地址
 # https://doc2.bitbrowser.cn/jiekou/ben-di-fu-wu-zhi-nan.html
@@ -33,6 +35,15 @@ class BrowserClient:
         url = f"{self.url}{endpoint}"
         response = self.session.post(url, data=json.dumps(data or {}))
         j = response.json()
+
+        try:
+            APIResponse.model_validate(j)  # validate response
+            status: bool = j.get("success", False)
+            if not status:
+                raise BadRequest(f"Bad request: {j.get('msg', 'No message')}")
+        except Exception as e:
+            raise ValidationError(f"Response validation error: {e}")
+
         return j.get("data")
 
     def create_browser(
