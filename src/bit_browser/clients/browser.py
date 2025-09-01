@@ -132,7 +132,7 @@ class BrowserClient:
         return r
 
     # Additional documented endpoints
-    def list_browsers(self, page: int, page_size: int, **filters):
+    def list_browsers(self, page: int = 0, page_size: int = 100, **filters):
         data = {"page": page, "pageSize": page_size}
         data.update(filters)
         return self._post("/browser/list", data)
