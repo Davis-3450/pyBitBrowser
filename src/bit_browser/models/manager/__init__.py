@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
+from typing import List, Optional, Set
+
+from prettyprinter import pprint
 
 from bit_browser.models import client
 from bit_browser.models.browser import Browser
@@ -19,20 +22,40 @@ class Session:
 
 class BrowserManager:
     def __init__(self):
-        self.browsers: list[Session] = []
         self.client = client
+        self.sessions: dict[str, Session] = {}
 
     def _helper(self):
         self._get_all_browsers()
 
     def _get_all_browsers(self) -> None:
-        """_summary_"""
-        sessions: list[Session] = []
-        all_browsers = self.client.list_browsers()
+        """Get all browsers from the API and populate self.browsers."""
 
-        # TODO - implement
-        for b in all_browsers:
-            pass  # TODO - implement
+        page = 0
+        seen = 0
+
+        while True:
+            r = self.client.list_browsers(page=page)
+
+            total_num = r.get("totalNum", 0)  # total
+            current_page_list: list = r["list"]
+
+            for browser in current_page_list:
+                b_id = browser["id"]
+
+                if b_id in self.sessions.keys():
+                    continue
+
+                b = Browser(**browser)
+                s = Session(id=b_id, browser=b, status=Status.closed)
+                self.sessions[b_id] = s
+
+                seen += 1
+
+            if seen >= total_num:
+                break
+
+            page += 1
 
     def _get_browser(self, id: str) -> Session | None:
         r = self.client.get_browser_details(id)
