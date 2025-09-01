@@ -1,11 +1,11 @@
 from pydantic import BaseModel
 
 
-class BaseBrowserModel(BaseModel):
+class Base(BaseModel):
     pass
 
 
-class BrowserFingerprint(BaseBrowserModel):
+class BrowserFingerprint(Base):
     id: str
     seq: int
     browserId: str
@@ -47,7 +47,11 @@ class BrowserFingerprint(BaseBrowserModel):
     updateTime: str
 
 
-class Browser(BaseBrowserModel):
+class BaseBrowserModel(Base):
+    pass
+
+
+class Browser(Base):
     id: str
     seq: int
     code: str
