@@ -125,23 +125,19 @@ class BrowserClient:
 
     def close_browser(self, id):  # 关闭窗口
         data = {"id": f"{id}"}
-        r = self._post("/browser/close", data)
-        return r
+        return self._post("/browser/close", data)
 
     def delete_browser(self, id):  # 删除窗口
         data = {"id": f"{id}"}
-        r = self._post("/browser/delete", data)
-        return r
+        return self._post("/browser/delete", data)
 
     def get_browser_details(self, id):
         data = {"id": f"{id}"}
-        r = self._post("/browser/detail", data)
-        return r
+        return self._post("/browser/detail", data)
 
     def reset_closed_state(self, id):
         data = {"id": f"{id}"}
-        r = self._post("/users", data)
-        return r
+        return self._post("/users", data)
 
     # Additional documented endpoints
     def list_browsers(self, page: int = 0, page_size: int = 100, **filters):
