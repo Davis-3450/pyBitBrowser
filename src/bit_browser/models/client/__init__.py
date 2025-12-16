@@ -1,7 +1,3 @@
-from pydantic import BaseModel
+from bit_browser.models.base import APIResponse
 
-
-class APIResponse(BaseModel):
-    success: bool
-    msg: str | None = None
-    data: dict | list | None = None
+__all__ = ["APIResponse"]
