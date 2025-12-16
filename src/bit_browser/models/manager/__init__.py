@@ -4,7 +4,7 @@ from typing import List, Optional, Set
 
 from prettyprinter import pprint
 
-from bit_browser.models import client
+from bit_browser.client import client
 from bit_browser.models.browser import Browser
 
 
@@ -15,7 +15,7 @@ class Status(Enum):
 
 @dataclass
 class Session:
-    id: str
+    browser_id: str
     status: Status
     browser: Browser
 
@@ -47,7 +47,7 @@ class BrowserManager:
                     continue
 
                 b = Browser(**browser)
-                s = Session(id=b_id, browser=b, status=Status.closed)
+                s = Session(browser_id=b_id, browser=b, status=Status.closed)
                 self.sessions[b_id] = s
 
                 seen += 1
@@ -57,8 +57,8 @@ class BrowserManager:
 
             page += 1
 
-    def _get_browser(self, id: str) -> Session | None:
-        r = self.client.get_browser_details(id)
+    def _get_browser(self, browser_id: str) -> Session | None:
+        r = self.client.get_browser_details(browser_id)
         if r:
             pass  # TODO - implement
         return None
