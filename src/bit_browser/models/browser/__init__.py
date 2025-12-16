@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Base(BaseModel):
@@ -48,32 +48,37 @@ class BrowserFingerprint(Base):
 
 
 class BaseBrowserModel(Base):
-    pass
+    """Here we define the minimal fields for the browser"""
+
+    name: str
+    remark: str
+    proxyMethod: int
+    proxyType: str = "noproxy"
+    host: str = ""
+    port: str = ""
+    proxyUserName: str = ""
 
 
-class Browser(Base):
+class Browser(BaseBrowserModel):
+    # takes base
     id: str
     seq: int
     code: str
     platform: str
     platformIcon: str
     url: str
-    name: str
+    # name: str
     userName: str
     password: str
     cookie: str
     proxyMethod: int
-    proxyType: str
     agentId: str
-    host: str
-    proxyUserName: str
     proxyPassword: str
     lastIp: str
     lastCountry: str
     country: str
     province: str
     city: str
-    remark: str
     status: int
     operUserId: str | None = None
     operUserName: str
@@ -95,3 +100,16 @@ class Browser(Base):
     agentIpCount: int | None = None
     belongToMe: bool
     ip: str
+
+
+# Creation helper models
+class BaseExtraIgnore(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+
+class BrowserFingerprintCreate(BaseExtraIgnore):
+    coreVersion: str = "112"
+
+
+class CreateBrowser(BaseBrowserModel):
+    browserFingerPrint: BrowserFingerprintCreate
