@@ -177,13 +177,13 @@ class BrowserClient:
         req = BrowserUpdateRequest(
             name=name,
             remark=remark,
-            proxy_method=proxy_method,
-            proxy_type=proxy_type,
+            proxyMethod=proxy_method,
+            proxyType=proxy_type,
             host=host or None,
             port=port or None,
-            proxy_user_name=proxy_user_name or None,
-            browser_id=browser_id or kwargs.get("id"),
-            browser_finger_print=browser_fingerprint or {"coreVersion": core_version},
+            proxyUserName=proxy_user_name or None,
+            id=browser_id or kwargs.get("id"),
+            browserFingerPrint=browser_fingerprint or {"coreVersion": core_version},
         )
         payload = self._payload(req)
         if extra:
@@ -198,7 +198,7 @@ class BrowserClient:
         return self.browser_update(payload)
 
     def update_browsers(self, ids: list[str], remark: str) -> Any:
-        req = BrowserPartialUpdateRequest(ids=ids, browser_finger_print={})
+        req = BrowserPartialUpdateRequest(ids=ids, browserFingerPrint={})
         payload = self._payload(req)
         payload["remark"] = remark
         return self._post("/browser/update/partial", payload)
@@ -251,13 +251,13 @@ class BrowserClient:
         return self._post("/alldisplays")
 
     def rpa_run(self, task_id: str) -> Any:
-        return self._post("/rpa/run", self._payload(RpaRequest(task_id=task_id)))
+        return self._post("/rpa/run", self._payload(RpaRequest(id=task_id)))
 
     def rpa_stop(self, task_id: str) -> Any:
-        return self._post("/rpa/stop", self._payload(RpaRequest(task_id=task_id)))
+        return self._post("/rpa/stop", self._payload(RpaRequest(id=task_id)))
 
     def autopaste(self, browser_id: str, url: str) -> Any:
-        return self._post("/autopaste", self._payload(AutopasteRequest(browser_id=browser_id, url=url)))
+        return self._post("/autopaste", self._payload(AutopasteRequest(browserId=browser_id, url=url)))
 
     def utils_read_excel(self, filepath: str) -> Any:
         return self._post("/utils/readexcel", self._payload(ReadFileRequest(filepath=filepath)))
@@ -266,13 +266,13 @@ class BrowserClient:
         return self._post("/utils/readfile", self._payload(ReadFileRequest(filepath=filepath)))
 
     def cookies_set(self, browser_id: str, cookies: list[dict]) -> Any:
-        return self._post("/browser/cookies/set", self._payload(CookiesSetRequest(browser_id=browser_id, cookies=cookies)))
+        return self._post("/browser/cookies/set", self._payload(CookiesSetRequest(browserId=browser_id, cookies=cookies)))
 
     def cookies_get(self, browser_id: str) -> Any:
         return self._post("/browser/cookies/get", {"browserId": browser_id})
 
     def cookies_clear(self, browser_id: str, save_synced: bool = True) -> Any:
-        return self._post("/browser/cookies/clear", self._payload(CookiesClearRequest(browser_id=browser_id, save_synced=save_synced)))
+        return self._post("/browser/cookies/clear", self._payload(CookiesClearRequest(browserId=browser_id, saveSynced=save_synced)))
 
     def cookies_format(self, cookie: str | list[dict], hostname: str | None = None) -> Any:
         return self._post("/browser/cookies/format", self._payload(CookiesFormatRequest(cookie=cookie, hostname=hostname)))
@@ -402,7 +402,7 @@ class BrowserClient:
         return self._post("/browser/proxy/update", self._payload(request))
 
     def update_remark(self, browser_ids: Sequence[str], remark: str) -> Any:
-        return self._post("/browser/remark/update", self._payload(UpdateRemarkRequest(browser_ids=list(browser_ids), remark=remark)))
+        return self._post("/browser/remark/update", self._payload(UpdateRemarkRequest(browserIds=list(browser_ids), remark=remark)))
 
     def check_agent(
         self,
