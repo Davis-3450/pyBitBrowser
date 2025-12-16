@@ -1,13 +1,15 @@
-import json
-from typing import Optional
+from typing import Optional, Sequence, Any
 
 import requests
 
 from bit_browser.constants import HEADERS, URL
 from bit_browser.errors import BadRequest, ValidationError
 from bit_browser.models.client import APIResponse
+from bit_browser.models.browser import (
+    CreateBrowser,
+)
 
-# 官方文档地址
+# Docs
 # https://doc2.bitbrowser.cn/jiekou/ben-di-fu-wu-zhi-nan.html
 
 # 此demo仅作为参考使用，以下使用的指纹参数仅是部分参数，完整参数请参考文档
@@ -30,10 +32,15 @@ class BrowserClient:
         self.session.headers.update(self.headers)
         self.session.headers.update({"x-api-key": token}) if token else None
 
-    def _post(self, endpoint: str, data: dict | None = None):
-        """POST helper that sends JSON and returns parsed JSON."""
+    def _post(
+        self, endpoint: str, data: dict | None = None, timeout: float | None = 10.0
+    ):
+        """POST helper that sends JSON and returns parsed JSON.
+
+        Uses `json=` for proper JSON serialization and a default timeout.
+        """
         url = f"{self.url}{endpoint}"
-        response = self.session.post(url, data=json.dumps(data or {}))
+        response = self.session.post(url, json=(data or {}), timeout=timeout)
 
         try:
             r = response
@@ -47,9 +54,10 @@ class BrowserClient:
         except Exception as e:
             raise ValidationError(f"Response validation error: {e}")
 
-    def _edit_browser(
+    def create_or_update_browser(
         self,
-        browser: str,
+        id: str | None = None,
+        name: str,
         remark: str,
         proxy_method: int,
         proxy_type: str = "noproxy",
@@ -57,10 +65,19 @@ class BrowserClient:
         port: str = "",
         proxy_user_name: str = "",
         core_version: str = "112",
-    ) -> str:
-        # TODO: change to use pydantic model - improve validations
+        browser_fingerprint: dict | None = None,
+        extra: dict | None = None,
+    ):
+        """Create or update a browser profile using /browser/update.
+
+        This endpoint is multi-propósito: si se envía `id`, actualiza; si no,
+        crea. Se permiten campos adicionales vía `extra` según bitbrowser.md.
+        """
+
+        # Base payload following docs and examples
         data = {
-            "name": browser,  # 窗口名称
+            **({"id": id} if id else {}),
+            "name": name,  # 窗口名称
             "remark": remark,  # 备注
             "proxyMethod": proxy_method,  # 代理方式 2自定义 3 提取IP
             # 代理类型  ['noproxy', 'http', 'https', 'socks5', 'ssh']
@@ -68,29 +85,62 @@ class BrowserClient:
             "host": host,  # 代理主机
             "port": port,  # 代理端口
             "proxyUserName": proxy_user_name,  # 代理账号
-            "browserFingerPrint": {  # 指纹对象
-                "coreVersion": core_version  # 内核版本 112 | 104，建议使用112，注意，win7/win8/winserver 2012 已经不支持112内核了，无法打开
-            },
+            "browserFingerPrint": (
+                browser_fingerprint
+                if browser_fingerprint is not None
+                else {
+                    # 指纹对象: 内核版本 112 | 104
+                    "coreVersion": core_version,
+                }
+            ),
         }
-        # Example:
-        #  json_data = {
-        #     "name": "google",  # 窗口名称
-        #     "remark": "",  # 备注
-        #     "proxyMethod": 2,  # 代理方式 2自定义 3 提取IP
-        #     # 代理类型  ['noproxy', 'http', 'https', 'socks5', 'ssh']
-        #     "proxyType": "noproxy",
-        #     "host": "",  # 代理主机
-        #     "port": "",  # 代理端口
-        #     "proxyUserName": "",  # 代理账号
-        #     "browserFingerPrint": {  # 指纹对象
-        #         "coreVersion": "112"  # 内核版本 112 | 104，建议使用112，注意，win7/win8/winserver 2012 已经不支持112内核了，无法打开
-        #     },
-        # }
+        if extra:
+            data.update(extra)
 
-        res = self._post("/browser/update", data)
-        browser_id = res["data"]["id"]
-        print(browser_id)
-        return browser_id
+        return self._post("/browser/update", data)
+
+    def create_browser(self, payload: CreateBrowser | dict[str, Any]):
+        """Create a browser profile using a typed model or a raw dict.
+
+        Accepts `CreateBrowser` (preferred) or a raw dict compatible with
+        the `/browser/update` endpoint. This method always creates (no id).
+        """
+        if isinstance(payload, CreateBrowser):
+            data = payload.model_dump()
+        else:
+            # Ensure no id is passed for creation semantics
+            data = {k: v for k, v in payload.items() if k != "id"}
+        return self._post("/browser/update", data)
+
+    # Backwards-compat alias; prefer `create_browser`
+    def _edit_browser(
+        self,
+        id: str | None = None,
+        name: str,
+        remark: str,
+        proxy_method: int,
+        proxy_type: str = "noproxy",
+        host: str = "",
+        port: str = "",
+        proxy_user_name: str = "",
+        core_version: str = "112",
+        browser_fingerprint: dict | None = None,
+        extra: dict | None = None,
+    ):
+        # Maintained for backwards-compat, use create_or_update_browser
+        return self.create_or_update_browser(
+            id=id,
+            name=name,
+            remark=remark,
+            proxy_method=proxy_method,
+            proxy_type=proxy_type,
+            host=host,
+            port=port,
+            proxy_user_name=proxy_user_name,
+            core_version=core_version,
+            browser_fingerprint=browser_fingerprint,
+            extra=extra,
+        )
 
     def update_browsers(self, ids: list[str], remark: str):
         # 更新窗口，支持批量更新和按需更新，ids 传入数组，单独更新只传一个id即可，只传入需要修改的字段即可，比如修改备注，具体字段请参考文档，browserFingerPrint指纹对象不修改，则无需传入
@@ -110,6 +160,16 @@ class BrowserClient:
         r = self._post("/browser/update/partial", data)
 
         return r
+
+    def update_browser_partial(self, ids: Sequence[str], **fields):
+        """Partial update for one or many browsers via `/browser/update/partial`.
+
+        Pass only the fields you want to modify. For example:
+        update_browser_partial([id], name="New Name", browserFingerPrint={})
+        """
+        data = {"ids": list(ids)}
+        data.update(fields)
+        return self._post("/browser/update/partial", data)
 
     def open_browser(
         self, id, args: list[str] | None = None, queue: bool | None = None
@@ -149,6 +209,12 @@ class BrowserClient:
         # type, startX, startY, width, height, col, spaceX, spaceY, offsetX, offsetY
         return self._post("/windowbounds", window_bounds)
 
+    def windowbounds_flexible(self, seqlist: Sequence[int] | None = None):
+        data: dict[str, Any] = {}
+        if seqlist is not None:
+            data["seqlist"] = list(seqlist)
+        return self._post("/windowbounds/flexable", data)
+
     def get_all_displays(self):
         return self._post("/alldisplays")
 
@@ -181,7 +247,7 @@ class BrowserClient:
             {"browserId": browser_id, "saveSynced": save_synced},
         )
 
-    def cookies_format(self, cookie, hostname: str | None = None):
+    def cookies_format(self, cookie: str | list[dict], hostname: str | None = None):
         data = {"cookie": cookie}
         if hostname is not None:
             data["hostname"] = hostname
@@ -202,8 +268,71 @@ class BrowserClient:
     def get_all_pids(self):
         return self._post("/browser/pids/all")
 
+    def get_pids(self, ids: Sequence[str]):
+        return self._post("/browser/pids", {"ids": list(ids)})
+
     def delete_browsers_by_ids(self, ids: list[str]):
         return self._post("/browser/delete/ids", {"ids": ids})
+
+    def close_by_seqs(self, seqs: Sequence[int]):
+        return self._post("/browser/close/byseqs", {"seqs": list(seqs)})
+
+    def close_all(self):
+        return self._post("/browser/close/all")
+
+    def update_group(self, group_id: str, browser_ids: Sequence[str]):
+        return self._post(
+            "/browser/group/update",
+            {"groupId": group_id, "browserIds": list(browser_ids)},
+        )
+
+    def update_proxy(
+        self,
+        ids: Sequence[str],
+        ip_check_service: str,
+        proxy_method: int,
+        proxy_type: str | None = None,
+        host: str | None = None,
+        port: int | None = None,
+        proxy_user_name: str | None = None,
+        proxy_password: str | None = None,
+        dynamic_ip_url: str | None = None,
+        dynamic_ip_channel: str | None = None,
+        is_dynamic_ip_change_ip: bool | None = None,
+        is_global_proxy_info: bool | None = None,
+        is_ipv6: bool | None = None,
+    ):
+        data: dict[str, Any] = {
+            "ids": list(ids),
+            "ipCheckService": ip_check_service,
+            "proxyMethod": proxy_method,
+        }
+        if proxy_type is not None:
+            data["proxyType"] = proxy_type
+        if host is not None:
+            data["host"] = host
+        if port is not None:
+            data["port"] = port
+        if proxy_user_name is not None:
+            data["proxyUserName"] = proxy_user_name
+        if proxy_password is not None:
+            data["proxyPassword"] = proxy_password
+        if dynamic_ip_url is not None:
+            data["dynamicIpUrl"] = dynamic_ip_url
+        if dynamic_ip_channel is not None:
+            data["dynamicIpChannel"] = dynamic_ip_channel
+        if is_dynamic_ip_change_ip is not None:
+            data["isDynamicIpChangeIp"] = is_dynamic_ip_change_ip
+        if is_global_proxy_info is not None:
+            data["isGlobalProxyInfo"] = is_global_proxy_info
+        if is_ipv6 is not None:
+            data["isIpv6"] = is_ipv6
+        return self._post("/browser/proxy/update", data)
+
+    def update_remark(self, browser_ids: Sequence[str], remark: str):
+        return self._post(
+            "/browser/remark/update", {"browserIds": list(browser_ids), "remark": remark}
+        )
 
     def check_agent(
         self,
@@ -222,3 +351,62 @@ class BrowserClient:
         if check_exists is not None:
             data["checkExists"] = check_exists
         return self._post("/checkagent", data)
+
+    # Local library data (extralog) endpoints
+    def extralog_list(
+        self,
+        page: int,
+        page_size: int,
+        search_key: str,
+        search_value: str,
+        order_by: str | None = None,
+    ):
+        data: dict[str, Any] = {
+            "page": page,
+            "page_size": page_size,
+            "search_key": search_key,
+            "search_value": search_value,
+        }
+        if order_by is not None:
+            data["order_by"] = order_by
+        return self._post("/extralog/list", data)
+
+    def extralog_add(
+        self,
+        log_key: str,
+        log_name: str,
+        log_value: str,
+        log_type: str,
+        log_desc: str | None = None,
+        log_remark: str | None = None,
+        log_extra_info: str | None = None,
+    ):
+        data: dict[str, Any] = {
+            "log_key": log_key,
+            "log_name": log_name,
+            "log_value": log_value,
+            "log_type": log_type,
+        }
+        if log_desc is not None:
+            data["log_desc"] = log_desc
+        if log_remark is not None:
+            data["log_remark"] = log_remark
+        if log_extra_info is not None:
+            data["log_extra_info"] = log_extra_info
+        return self._post("/extralog/add", data)
+
+    def extralog_update(self, id: int, **fields):
+        data: dict[str, Any] = {"id": id}
+        data.update(fields)
+        return self._post("/extralog/update", data)
+
+    def extralog_delete(self, id: int):
+        return self._post("/extralog/delete", {"id": id})
+
+    def extralog_detail(self, id: int, **extra):
+        data: dict[str, Any] = {"id": id}
+        data.update(extra)
+        return self._post("/extralog/detail", data)
+
+    def extralog_clear(self):
+        return self._post("/extralog/clear")
