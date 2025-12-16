@@ -1,3 +1,5 @@
-from bit_browser.clients.browser import BrowserClient
+"""Pydantic models for the BitBrowser local API."""
 
-client = BrowserClient()
+from bit_browser.models.base import APIModel, APIResponse
+
+__all__ = ["APIModel", "APIResponse"]
