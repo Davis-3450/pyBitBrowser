@@ -1,115 +1,105 @@
-from pydantic import BaseModel, ConfigDict
+from __future__ import annotations
+
+from typing import Any, List, Optional
+
+from pydantic import Field
+
+from bit_browser.models.base import APIModel
 
 
-class Base(BaseModel):
-    pass
+class BrowserFingerprint(APIModel):
+    # Response object (many more fields exist; extras are allowed)
+    id: Optional[str] = None
+    seq: Optional[int] = None
+    browserId: Optional[str] = None
+    coreVersion: Optional[str] = None
+    ostype: Optional[str] = None
+    os: Optional[str] = None
+    osVersion: Optional[str] = None
+    userAgent: Optional[str] = None
 
 
-class BrowserFingerprint(Base):
-    id: str
-    seq: int
-    browserId: str
-    ostype: str
-    os: str
-    version: str
-    userAgent: str
-    isIpCreateTimeZone: bool
-    timeZone: str
-    webRTC: str
-    position: str
-    isIpCreatePosition: bool
-    isIpCreateLanguage: bool
-    resolutionType: str
-    resolution: str
-    fontType: str
-    canvas: str
-    webGL: str
-    webGLManufacturer: str
-    webGLMeta: str
-    webGLRender: str
-    audioContext: str
-    mediaDevice: str
-    clientRects: str
-    hardwareConcurrency: str
-    deviceMemory: str
-    deviceNameType: str
-    deviceName: str
-    doNotTrack: str
-    flash: str
-    portScanProtect: str
-    portWhiteList: str
-    isDelete: int
-    colorDepth: int
-    devicePixelRatio: float
-    createdBy: str
-    createdTime: str
-    updateBy: str
-    updateTime: str
+class BrowserProfile(APIModel):
+    # Response profile (list/detail). Fields are intentionally mostly optional.
+    id: Optional[str] = None
+    seq: Optional[int] = None
+    code: Optional[str] = None
+    platform: Optional[str] = None
+    platformIcon: Optional[str] = None
+    url: Optional[str] = None
+    name: Optional[str] = None
+    remark: Optional[str] = None
+    userName: Optional[str] = None
+    password: Optional[str] = None
+    cookie: Optional[str] = None
+
+    proxyMethod: Optional[int] = None
+    proxyType: Optional[str] = None
+    host: Optional[str] = None
+    port: Optional[Any] = None
+    proxyUserName: Optional[str] = None
+    proxyPassword: Optional[str] = None
+
+    groupId: Optional[str] = None
+    status: Optional[int] = None
+    ip: Optional[str] = None
+    country: Optional[str] = None
+    province: Optional[str] = None
+    city: Optional[str] = None
+
+    browserFingerPrint: Optional[BrowserFingerprint] = None
 
 
-class BaseBrowserModel(Base):
-    """Here we define the minimal fields for the browser"""
+class BrowserListData(APIModel):
+    totalNum: int = 0
+    list: List[BrowserProfile] = Field(default_factory=list)
 
+
+class BrowserOpenData(APIModel):
+    ws: str
+    http: str
+    coreVersion: Optional[str] = None
+    driver: Optional[str] = None
+    seq: Optional[int] = None
+    name: Optional[str] = None
+    remark: Optional[str] = None
+    groupId: Optional[str] = None
+    pid: Optional[int] = None
+
+class BrowserUpdateRequest(APIModel):
+    # /browser/update (create or update when id is set)
+    id: Optional[str] = None
+    groupId: Optional[str] = None
+    platform: Optional[str] = None
+    platformIcon: Optional[str] = None
+    url: Optional[str] = None
     name: str
-    remark: str
-    proxyMethod: int
+    remark: Optional[str] = None
+    userName: Optional[str] = None
+    password: Optional[str] = None
+    cookie: Optional[str] = None
+
+    proxyMethod: int = 2
     proxyType: str = "noproxy"
-    host: str = ""
-    port: str = ""
-    proxyUserName: str = ""
+    host: Optional[str] = None
+    port: Optional[Any] = None
+    proxyUserName: Optional[str] = None
+    proxyPassword: Optional[str] = None
+
+    ip: Optional[str] = None
+    country: Optional[str] = None
+    province: Optional[str] = None
+    city: Optional[str] = None
+
+    # docs: can be {} for random, so keep as dict
+    browserFingerPrint: dict[str, Any] = Field(default_factory=dict)
 
 
-class Browser(BaseBrowserModel):
-    # takes base
-    id: str
-    seq: int
-    code: str
-    platform: str
-    platformIcon: str
-    url: str
-    # name: str
-    userName: str
-    password: str
-    cookie: str
-    proxyMethod: int
-    agentId: str
-    proxyPassword: str
-    lastIp: str
-    lastCountry: str
-    country: str
-    province: str
-    city: str
-    status: int
-    operUserId: str | None = None
-    operUserName: str
-    operTime: str | None = None
-    isDelete: int
-    delReason: str
-    isMostCommon: int
-    tempStr: str | None = None
-    createdBy: str
-    userId: str
-    createdTime: str
-    updateBy: str | None = None
-    updateTime: str | None = None
-    mainUserId: str
-    browserFingerPrint: BrowserFingerprint | None = None
-    createdName: str
-    belongUserName: str | None = None
-    updateName: str | None = None
-    agentIpCount: int | None = None
-    belongToMe: bool
-    ip: str
+class BrowserPartialUpdateRequest(APIModel):
+    ids: List[str]
+    browserFingerPrint: dict[str, Any] = Field(default_factory=dict)
 
 
-# Creation helper models
-class BaseExtraIgnore(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-
-class BrowserFingerprintCreate(BaseExtraIgnore):
-    coreVersion: str = "112"
-
-
-class CreateBrowser(BaseBrowserModel):
-    browserFingerPrint: BrowserFingerprintCreate
+# Backwards-compat aliases
+Browser = BrowserProfile
+CreateBrowser = BrowserUpdateRequest
