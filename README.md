@@ -2,6 +2,8 @@
 
 A pythonic API wrapper for BitBrowser's local API
 
+![GitHub Repo Views](https://gitviews.com/repo/null/pyBitBrowser.svg)
+
 ## Usage
 
 ```python
