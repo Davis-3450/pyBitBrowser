@@ -2,9 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Set
 
-from prettyprinter import pprint
-
-from bit_browser.client import client
+from bit_browser.clients.browser import BrowserClient
 from bit_browser.models.browser import Browser
 
 
@@ -21,7 +19,7 @@ class Session:
 
 
 class BrowserManager:
-    def __init__(self):
+    def __init__(self, client: BrowserClient):
         self.client = client
         self.sessions: dict[str, Session] = {}
 
