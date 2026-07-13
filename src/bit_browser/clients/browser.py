@@ -38,12 +38,15 @@ from bit_browser.models.misc import (
     RpaRequest,
     UpdateRemarkRequest,
     WindowBoundsFlexibleRequest,
+    WindowBoundsRequest,
 )
 
 # Docs
 # https://doc2.bitbrowser.cn/jiekou/ben-di-fu-wu-zhi-nan.html
 
 # 此demo仅作为参考使用，以下使用的指纹参数仅是部分参数，完整参数请参考文档
+
+T = TypeVar("T")
 
 
 class BrowserClient:
@@ -239,9 +242,51 @@ class BrowserClient:
         data.update(filters)
         return self._post_typed("/browser/list", data, BrowserListData)
 
-    def windowbounds_reset(self, **window_bounds) -> Any:
-        # type, startX, startY, width, height, col, spaceX, spaceY, offsetX, offsetY
-        return self._post("/windowbounds", window_bounds)
+    def windowbounds_reset(
+        self,
+        request: WindowBoundsRequest | dict[str, Any] | None = None,
+        *,
+        type: str | None = None,
+        startX: int | None = None,
+        startY: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
+        col: int | None = None,
+        spaceX: int | None = None,
+        spaceY: int | None = None,
+        offsetX: int | None = None,
+        offsetY: int | None = None,
+        seqlist: Sequence[int] | None = None,
+        screenId: int | None = None,
+        **extra: Any,
+    ) -> Any:
+        """Arrange browser windows on screen.
+
+        Accepts either a full ``request`` (model or dict) or the documented
+        parameters as named keyword arguments. Any extra keyword arguments are
+        merged into the payload as-is.
+        """
+        if request is not None:
+            payload = self._payload(request)
+        else:
+            payload = self._payload(
+                WindowBoundsRequest(
+                    type=type,
+                    startX=startX,
+                    startY=startY,
+                    width=width,
+                    height=height,
+                    col=col,
+                    spaceX=spaceX,
+                    spaceY=spaceY,
+                    offsetX=offsetX,
+                    offsetY=offsetY,
+                    seqlist=list(seqlist) if seqlist is not None else None,
+                    screenId=screenId,
+                )
+            )
+        payload.update(extra)
+        return self._post("/windowbounds", payload)
 
     def windowbounds_flexible(self, seqlist: Sequence[int] | None = None) -> Any:
         req = WindowBoundsFlexibleRequest(seqlist=list(seqlist) if seqlist is not None else None)
